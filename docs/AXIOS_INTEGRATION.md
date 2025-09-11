@@ -1,10 +1,10 @@
 # Axios Integration Guide
 
-This template includes a robust axios setup with error handling using Sonner toast notifications from shadcn/ui.
+This template includes a robust axios setup with error handling using Sonner toast notifications from shadcn/ui, specifically designed for external backend API integration.
 
 ## 🚀 Features
 
-- ✅ Axios instance with interceptors
+- ✅ Axios instance configured for external APIs
 - ✅ Automatic error handling with toast notifications
 - ✅ TypeScript support with proper typing
 - ✅ Custom React hooks for API operations
@@ -32,17 +32,19 @@ src/
 
 ### Environment Variables
 
-Add these to your `.env.local`:
+**Required**: Add your external API base URL to `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=https://your-api-domain.com
-# If not provided, defaults to '/api' (for Next.js API routes)
+NEXT_PUBLIC_API_BASE_URL=https://your-external-api.com
 ```
+
+> **Important**: This template is designed for external APIs only. Make sure to set your backend API URL in the environment variable.
 
 ### Axios Configuration
 
 The axios instance is configured with:
-- Base URL from environment variable
+- Base URL from environment variable (required for external APIs)
+- Fallback to JSONPlaceholder for demo purposes if no URL is provided
 - 10-second timeout
 - JSON content type
 - Automatic auth token injection
@@ -63,12 +65,14 @@ function MyComponent() {
   const { data: createData, loading: createLoading, execute: createUser } = useApiPost<User, CreateUserData>();
 
   const handleFetchUsers = async () => {
-    await execute('/api/users');
+    // Will call: https://your-external-api.com/users
+    await execute('/users');
   };
 
   const handleCreateUser = async () => {
     const userData = { name: 'John', email: 'john@example.com' };
-    await createUser('/api/users', userData);
+    // Will call: https://your-external-api.com/users
+    await createUser('/users', userData);
   };
 
   return (
@@ -90,12 +94,12 @@ function MyComponent() {
 ```tsx
 import { apiClientService } from '@/lib/api-client';
 
-// Direct API calls
-const users = await apiClientService.get<User[]>('/api/users');
-const newUser = await apiClientService.post<User, CreateUserData>('/api/users', userData);
+// Direct API calls (uses your external API base URL)
+const users = await apiClientService.get<User[]>('/users');
+const newUser = await apiClientService.post<User, CreateUserData>('/users', userData);
 
 // File upload
-const uploadResult = await apiClientService.upload('/api/upload', file, { userId: '123' });
+const uploadResult = await apiClientService.upload('/upload', file, { userId: '123' });
 
 // Download file
 await apiClientService.download('/api/files/document.pdf', 'my-document.pdf');

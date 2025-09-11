@@ -4,8 +4,14 @@ import type { ApiResponse, ApiError } from '@/lib/types/api';
 
 // Create axios instance with default configuration
 const createApiClient = (): AxiosInstance => {
+  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  
+  if (!baseURL) {
+    console.warn('⚠️ NEXT_PUBLIC_API_BASE_URL is not set. Please configure your external API base URL in environment variables.');
+  }
+
   const instance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || '',
+    baseURL: baseURL || 'https://jsonplaceholder.typicode.com', // Fallback to a demo API
     timeout: 10000,
     headers: {
       'Content-Type': 'application/json',
