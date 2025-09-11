@@ -30,6 +30,9 @@ export default function Home() {
                 <Link href="/login">Get Started</Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
+                <Link href="/api-demo">API Demo</Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
                 <Link href="#features">Learn More</Link>
               </Button>
             </div>
