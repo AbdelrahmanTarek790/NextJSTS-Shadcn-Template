@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios';
-import { apiClient } from './axios';
+import api from './axios';
 import type { ApiResponse, RequestConfig, PaginatedResponse } from './types/api';
 
 class ApiClientService {
@@ -10,7 +10,7 @@ class ApiClientService {
     url: string,
     params?: Record<string, unknown>
   ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.get(url, { params });
+    const response: AxiosResponse<ApiResponse<T>> = await api.get(url, { params });
     return response.data;
   }
 
@@ -22,7 +22,7 @@ class ApiClientService {
     data?: D,
     config?: Omit<RequestConfig, 'url' | 'method' | 'data'>
   ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.post(url, data, config);
+    const response: AxiosResponse<ApiResponse<T>> = await api.post(url, data, config);
     return response.data;
   }
 
@@ -34,7 +34,7 @@ class ApiClientService {
     data?: D,
     config?: Omit<RequestConfig, 'url' | 'method' | 'data'>
   ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.put(url, data, config);
+    const response: AxiosResponse<ApiResponse<T>> = await api.put(url, data, config);
     return response.data;
   }
 
@@ -46,7 +46,7 @@ class ApiClientService {
     data?: D,
     config?: Omit<RequestConfig, 'url' | 'method' | 'data'>
   ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.patch(url, data, config);
+    const response: AxiosResponse<ApiResponse<T>> = await api.patch(url, data, config);
     return response.data;
   }
 
@@ -57,7 +57,7 @@ class ApiClientService {
     url: string,
     config?: Omit<RequestConfig, 'url' | 'method'>
   ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.delete(url, config);
+    const response: AxiosResponse<ApiResponse<T>> = await api.delete(url, config);
     return response.data;
   }
 
@@ -85,7 +85,7 @@ class ApiClientService {
       });
     }
 
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.post(url, formData, {
+    const response: AxiosResponse<ApiResponse<T>> = await api.post(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -98,7 +98,7 @@ class ApiClientService {
    * Download file
    */
   async download(url: string, filename?: string): Promise<void> {
-    const response = await apiClient.get(url, {
+    const response = await api.get(url, {
       responseType: 'blob',
     });
 
@@ -124,7 +124,7 @@ class ApiClientService {
     url: string,
     params?: Record<string, unknown>
   ): Promise<PaginatedResponse<T>> {
-    const response: AxiosResponse<PaginatedResponse<T>> = await apiClient.get(url, { params });
+    const response: AxiosResponse<PaginatedResponse<T>> = await api.get(url, { params });
     return response.data;
   }
 

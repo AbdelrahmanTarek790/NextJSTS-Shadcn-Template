@@ -1,119 +1,93 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { toast } from 'sonner';
-import type { ApiResponse, ApiError } from '@/lib/types/api';
+import axios from "axios"
+import { toast } from "sonner"
+import { getAuthToken, clearAuthState } from "@/lib/auth"
 
-// Create axios instance with default configuration
-const createApiClient = (): AxiosInstance => {
-  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  
-  if (!baseURL) {
-    console.warn('⚠️ NEXT_PUBLIC_API_BASE_URL is not set. Please configure your external API base URL in environment variables.');
-  }
-
-  const instance = axios.create({
-    baseURL: baseURL || 'https://jsonplaceholder.typicode.com', // Fallback to a demo API
-    timeout: 10000,
+// Create instance
+const api = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
     headers: {
-      'Content-Type': 'application/json',
+        "Content-Type": "application/json",
     },
-  });
+})
 
-  // Request interceptor
-  instance.interceptors.request.use(
-    (config: AxiosRequestConfig) => {
-      // Add auth token if available
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('auth-token');
-        if (token && config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
+// Request interceptor
+api.interceptors.request.use(
+    (config) => {
+        const token = getAuthToken()
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`
         }
-      }
-
-      // Log request in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
-      }
-
-      return config;
+        return config
     },
-    (error: AxiosError) => {
-      console.error('Request interceptor error:', error);
-      return Promise.reject(error);
+    (error) => {
+        return Promise.reject(error)
     }
-  );
+)
 
-  // Response interceptor
-  instance.interceptors.response.use(
-    (response: AxiosResponse<ApiResponse>) => {
-      // Log response in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
-      }
-
-      return response;
+// Response interceptor
+api.interceptors.response.use(
+    (response) => {
+        return response
     },
-    (error: AxiosError<ApiError>) => {
-      // Handle different error scenarios
-      const errorMessage = handleApiError(error);
-      
-      // Show error toast notification
-      if (errorMessage && typeof window !== 'undefined') {
-        toast.error(errorMessage);
-      }
+    (error) => {
+        const { response } = error
 
-      return Promise.reject(error);
+        // Handle different error scenarios
+        if (response) {
+            // Handle token expiration
+            if (response.status === 401) {
+                clearAuthState()
+                window.location.href = "/login"
+                toast.error("Session expired. Please log in again.")
+            }
+
+            // Handle forbidden access
+            else if (response.status === 403) {
+                toast.error("You do not have permission to perform this action")
+            }
+
+            // Handle not found
+            else if (response.status === 404) {
+                toast.error("Resource not found")
+            }
+
+            // Handle validation errors
+            else if (response.status === 422) {
+                const validationErrors = response.data?.errors || {}
+                Object.values(validationErrors).forEach((errorArray) => {
+                    if (Array.isArray(errorArray)) {
+                        errorArray.forEach((error) => toast.error(String(error)))
+                    } else {
+                        toast.error(String(errorArray))
+                    }
+                })
+            }
+
+            // Handle server errors
+            else if (response.status >= 500) {
+                toast.error("Server error. Please try again later.")
+            }
+
+            // Handle other errors
+            else {
+                const errorMessage = response.data?.message || "An error occurred"
+                toast.error(errorMessage)
+            }
+        }
+        // Handle network errors
+        else if (error.request) {
+            toast.error("Network error. Please check your connection.")
+        }
+        // Handle other errors
+        else {
+            toast.error("An unexpected error occurred")
+        }
+
+        return Promise.reject(error)
     }
-  );
+)
 
-  return instance;
-};
+export default api
 
-// Error handler function
-const handleApiError = (error: AxiosError<ApiError>): string => {
-  // Network error
-  if (!error.response) {
-    return 'Network error. Please check your connection.';
-  }
-
-  const { status, data } = error.response;
-
-  switch (status) {
-    case 400:
-      return data?.message || 'Bad request. Please check your input.';
-    case 401:
-      // Handle unauthorized - redirect to login if needed
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth-token');
-        // Optionally redirect to login page
-        // window.location.href = '/login';
-      }
-      return 'Unauthorized. Please log in again.';
-    case 403:
-      return 'Forbidden. You do not have permission to perform this action.';
-    case 404:
-      return 'Resource not found.';
-    case 422:
-      // Handle validation errors
-      if (data?.errors) {
-        const errorMessages = Object.values(data.errors).flat();
-        return errorMessages.join(', ');
-      }
-      return data?.message || 'Validation error.';
-    case 429:
-      return 'Too many requests. Please try again later.';
-    case 500:
-      return 'Internal server error. Please try again later.';
-    case 502:
-      return 'Bad gateway. Please try again later.';
-    case 503:
-      return 'Service unavailable. Please try again later.';
-    default:
-      return data?.message || `An error occurred (${status}).`;
-  }
-};
-
-// Create and export the API client instance
-export const apiClient = createApiClient();
-
-// Export the error handler for external use
-export { handleApiError };
+// Named export for convenience
+export { api }
